@@ -32,3 +32,19 @@ print(f"First 5 values: {emb[:5]}")
 batch = generate_embeddings_batch(["First passage.", "Second passage."])
 print(f"Batch size: {len(batch)}")
 print(f"Each embedding length: {len(batch[0])}")
+
+# ---------- Supabase storage ----------
+
+from app.services.document_store import create_document, insert_chunks, list_documents
+
+doc_id = create_document("test_document.txt")
+print(f"Created document with id: {doc_id}")
+
+test_chunks = ["This is the first test chunk.", "This is the second test chunk."]
+test_embeddings = generate_embeddings_batch(test_chunks)
+
+inserted_count = insert_chunks(doc_id, test_chunks, test_embeddings)
+print(f"Inserted {inserted_count} chunks")
+
+docs = list_documents()
+print(f"Total documents in database: {len(docs)}")
