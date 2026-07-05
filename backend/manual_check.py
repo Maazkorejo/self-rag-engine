@@ -20,3 +20,15 @@ chunks = chunk_text(sample)
 print(f"Total chunks: {len(chunks)}")
 print(f"First chunk word count: {len(chunks[0].split())}")
 print(f"Last chunk word count: {len(chunks[-1].split())}")
+
+# ---------- Embeddings ----------
+
+from app.services.embeddings import generate_embedding, generate_embeddings_batch
+
+emb = generate_embedding("pgvector enables similarity search in Postgres.")
+print(f"Single embedding length: {len(emb)}")
+print(f"First 5 values: {emb[:5]}")
+
+batch = generate_embeddings_batch(["First passage.", "Second passage."])
+print(f"Batch size: {len(batch)}")
+print(f"Each embedding length: {len(batch[0])}")
