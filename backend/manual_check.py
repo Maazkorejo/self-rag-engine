@@ -57,3 +57,15 @@ results = retrieve_top_k("What is this document about?", top_k=3)
 print(f"Retrieved {len(results)} chunks")
 for r in results:
     print(f"  similarity={r['similarity']:.4f} | content={r['content'][:60]}...")
+
+# ---------- Full pipeline (real content) ----------
+
+from app.services.pipeline import run_self_rag_pipeline
+
+result = run_self_rag_pipeline("What are the four reflection tokens in Self-RAG?", top_k=3)
+print("\n--- Pipeline Result ---")
+print(f"Final answer: {result['final_answer']}")
+print(f"Utility score: {result['utility_score']}")
+print(f"Sources used: {result['sources_used']}")
+print(f"Hallucination risk: {result['hallucination_risk']}")
+print(f"Reflection log steps: {len(result['reflection_log'])}")
