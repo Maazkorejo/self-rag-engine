@@ -48,3 +48,12 @@ print(f"Inserted {inserted_count} chunks")
 
 docs = list_documents()
 print(f"Total documents in database: {len(docs)}")
+
+# ---------- Retrieval ----------
+
+from app.services.retrieval import retrieve_top_k
+
+results = retrieve_top_k("What is this document about?", top_k=3)
+print(f"Retrieved {len(results)} chunks")
+for r in results:
+    print(f"  similarity={r['similarity']:.4f} | content={r['content'][:60]}...")
