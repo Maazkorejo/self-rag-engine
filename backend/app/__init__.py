@@ -9,8 +9,10 @@ def create_app():
 
     from app.routes.health import health_bp
     from app.routes.ingest import ingest_bp
+    from app.routes.query import query_bp
 
     app.register_blueprint(health_bp, url_prefix="/api/v1")
     app.register_blueprint(ingest_bp, url_prefix="/api/v1")
+    app.register_blueprint(query_bp, url_prefix="/api/v1")
 
     return app
