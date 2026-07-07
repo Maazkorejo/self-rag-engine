@@ -3,11 +3,15 @@ from app.services.file_parser import extract_text
 from app.services.chunking import chunk_text
 from app.services.embeddings import generate_embeddings_batch
 from app.services.document_store import create_document, insert_chunks
+from app.services.auth_decorator import require_api_key
+from app import limiter
 
 ingest_bp = Blueprint("ingest", __name__)
 
 
 @ingest_bp.route("/ingest", methods=["POST"])
+@require_api_key
+@limiter.limit("100 per hour")
 def ingest_document():
     if "file" not in request.files:
         return jsonify({"error": "No file provided. Attach a file under the 'file' field."}), 400
