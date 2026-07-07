@@ -1,3 +1,4 @@
+from flask_swagger_ui import get_swaggerui_blueprint
 from flask import Flask
 from flask_cors import CORS
 from flask_limiter import Limiter
@@ -21,5 +22,9 @@ def create_app():
     app.register_blueprint(ingest_bp, url_prefix="/api/v1")
     app.register_blueprint(query_bp, url_prefix="/api/v1")
     app.register_blueprint(documents_bp, url_prefix="/api/v1")
+    swagger_bp = get_swaggerui_blueprint(
+        "/api/docs", "/static/openapi.yaml", config={"app_name": "Self-RAG Engine API"}
+    )
+    app.register_blueprint(swagger_bp, url_prefix="/api/docs")
 
     return app
