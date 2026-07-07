@@ -3,6 +3,8 @@ from unittest.mock import patch
 import pytest
 from app import create_app
 
+AUTH_HEADER = {"Authorization": "Bearer fake-test-key"}
+
 
 @pytest.fixture
 def client():
@@ -18,12 +20,14 @@ def make_file(filename: str, content: bytes):
 
 # ---------- Success case ----------
 
+@patch("app.services.auth_decorator.verify_api_key")
 @patch("app.routes.ingest.insert_chunks")
 @patch("app.routes.ingest.create_document")
 @patch("app.routes.ingest.generate_embeddings_batch")
 @patch("app.routes.ingest.chunk_text")
 @patch("app.routes.ingest.extract_text")
-def test_ingest_success(mock_extract, mock_chunk, mock_embed, mock_create_doc, mock_insert, client):
+def test_ingest_success(mock_extract, mock_chunk, mock_embed, mock_create_doc, mock_insert, mock_auth, client):
+    mock_auth.return_value = True
     mock_extract.return_value = "Some extracted text content."
     mock_chunk.return_value = ["chunk one", "chunk two"]
     mock_embed.return_value = [[0.1] * 384, [0.2] * 384]
@@ -33,7 +37,8 @@ def test_ingest_success(mock_extract, mock_chunk, mock_embed, mock_create_doc, m
     response = client.post(
         "/api/v1/ingest",
         data=make_file("test.txt", b"Some raw file bytes"),
-        content_type="multipart/form-data"
+        content_type="multipart/form-data",
+        headers=AUTH_HEADER
     )
 
     assert response.status_code == 201
@@ -45,19 +50,24 @@ def test_ingest_success(mock_extract, mock_chunk, mock_embed, mock_create_doc, m
 
 # ---------- Missing file ----------
 
-def test_ingest_no_file(client):
-    response = client.post("/api/v1/ingest", data={}, content_type="multipart/form-data")
+@patch("app.services.auth_decorator.verify_api_key")
+def test_ingest_no_file(mock_auth, client):
+    mock_auth.return_value = True
+    response = client.post("/api/v1/ingest", data={}, content_type="multipart/form-data", headers=AUTH_HEADER)
     assert response.status_code == 400
     assert "error" in response.get_json()
 
 
 # ---------- Empty filename ----------
 
-def test_ingest_empty_filename(client):
+@patch("app.services.auth_decorator.verify_api_key")
+def test_ingest_empty_filename(mock_auth, client):
+    mock_auth.return_value = True
     response = client.post(
         "/api/v1/ingest",
         data=make_file("", b"content"),
-        content_type="multipart/form-data"
+        content_type="multipart/form-data",
+        headers=AUTH_HEADER
     )
     assert response.status_code == 400
     assert "error" in response.get_json()
@@ -65,11 +75,14 @@ def test_ingest_empty_filename(client):
 
 # ---------- Unsupported file type ----------
 
-def test_ingest_unsupported_extension(client):
+@patch("app.services.auth_decorator.verify_api_key")
+def test_ingest_unsupported_extension(mock_auth, client):
+    mock_auth.return_value = True
     response = client.post(
         "/api/v1/ingest",
         data=make_file("test.exe", b"content"),
-        content_type="multipart/form-data"
+        content_type="multipart/form-data",
+        headers=AUTH_HEADER
     )
     assert response.status_code == 400
     assert "Unsupported file type" in response.get_json()["error"]
@@ -77,14 +90,17 @@ def test_ingest_unsupported_extension(client):
 
 # ---------- No extractable text ----------
 
+@patch("app.services.auth_decorator.verify_api_key")
 @patch("app.routes.ingest.extract_text")
-def test_ingest_empty_text(mock_extract, client):
+def test_ingest_empty_text(mock_extract, mock_auth, client):
+    mock_auth.return_value = True
     mock_extract.return_value = "   "
 
     response = client.post(
         "/api/v1/ingest",
         data=make_file("test.txt", b"content"),
-        content_type="multipart/form-data"
+        content_type="multipart/form-data",
+        headers=AUTH_HEADER
     )
     assert response.status_code == 400
     assert "No extractable text" in response.get_json()["error"]
@@ -92,14 +108,17 @@ def test_ingest_empty_text(mock_extract, client):
 
 # ---------- Internal failure ----------
 
+@patch("app.services.auth_decorator.verify_api_key")
 @patch("app.routes.ingest.extract_text")
-def test_ingest_internal_error(mock_extract, client):
+def test_ingest_internal_error(mock_extract, mock_auth, client):
+    mock_auth.return_value = True
     mock_extract.side_effect = Exception("Something broke")
 
     response = client.post(
         "/api/v1/ingest",
         data=make_file("test.txt", b"content"),
-        content_type="multipart/form-data"
+        content_type="multipart/form-data",
+        headers=AUTH_HEADER
     )
     assert response.status_code == 500
     assert "Ingestion failed" in response.get_json()["error"]
