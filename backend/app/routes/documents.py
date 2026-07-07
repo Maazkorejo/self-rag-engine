@@ -1,10 +1,12 @@
 from flask import Blueprint, jsonify
 from app.services.document_store import list_documents, delete_document
+from app.services.auth_decorator import require_api_key
 
 documents_bp = Blueprint("documents", __name__)
 
 
 @documents_bp.route("/documents", methods=["GET"])
+@require_api_key
 def get_documents():
     try:
         docs = list_documents()
@@ -14,6 +16,7 @@ def get_documents():
 
 
 @documents_bp.route("/documents/<document_id>", methods=["DELETE"])
+@require_api_key
 def remove_document(document_id):
     try:
         delete_document(document_id)
