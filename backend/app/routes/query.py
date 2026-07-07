@@ -1,11 +1,15 @@
 from flask import Blueprint, request, jsonify
 from app.services.pipeline import run_self_rag_pipeline
 from app.services.query_log_store import log_query, get_query_log
+from app.services.auth_decorator import require_api_key
+from app import limiter
 
 query_bp = Blueprint("query", __name__)
 
 
 @query_bp.route("/query", methods=["POST"])
+@require_api_key
+@limiter.limit("100 per hour")
 def run_query():
     data = request.get_json(silent=True)
 
@@ -39,6 +43,7 @@ def run_query():
 
 
 @query_bp.route("/reflection/<query_id>", methods=["GET"])
+@require_api_key
 def get_reflection(query_id):
     log = get_query_log(query_id)
 
