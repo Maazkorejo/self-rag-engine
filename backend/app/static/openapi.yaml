@@ -1,0 +1,107 @@
+openapi: 3.0.0
+info:
+  title: Self-Reflective RAG Engine API
+  version: "1.0"
+  description: >
+    A prompt-engineered implementation of the Self-RAG architecture
+    (Asai et al., ICLR 2024) using Groq LLaMA 3.3 70B and Supabase pgvector.
+servers:
+  - url: /api/v1
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: http
+      scheme: bearer
+paths:
+  /health:
+    get:
+      summary: Service health check
+      responses:
+        "200":
+          description: Service is healthy
+  /ingest:
+    post:
+      summary: Upload and index a document
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        "201":
+          description: Document ingested successfully
+        "400":
+          description: Invalid file or request
+        "401":
+          description: Missing or invalid API key
+  /query:
+    post:
+      summary: Run the Self-RAG pipeline on a query
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [query]
+              properties:
+                query:
+                  type: string
+                top_k:
+                  type: integer
+                  default: 5
+                force_retrieve:
+                  type: boolean
+                  default: false
+      responses:
+        "200":
+          description: Query answered successfully
+        "400":
+          description: Missing or empty query
+        "401":
+          description: Missing or invalid API key
+  /documents:
+    get:
+      summary: List all indexed documents
+      security:
+        - ApiKeyAuth: []
+      responses:
+        "200":
+          description: List of documents
+  /documents/{document_id}:
+    delete:
+      summary: Delete a document and its chunks
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: document_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Document deleted
+  /reflection/{query_id}:
+    get:
+      summary: Retrieve the reflection trace for a past query
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: query_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Reflection log found
+        "404":
+          description: Query not found
