@@ -1,0 +1,1 @@
+﻿This is a test document for the Self-RAG ingestion pipeline. It contains sample text to verify chunking, embedding, and storage all work correctly through the API endpoint.
